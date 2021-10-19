@@ -3,6 +3,7 @@ import requests
 import os
 import time
 import tempfile
+import argparse
 
 URL = 'https://www.vpngate.net/api/iphone/'
 DATABASE = 'vpn_configs'
