@@ -6,7 +6,7 @@ import tempfile
 import argparse
 
 URL = 'https://www.vpngate.net/api/iphone/'
-DATABASE = 'vpn_configs'
+DATABASE = 'vpn_configs.db'
 TOR_PROXY = "127.0.0.1 9050"
 
 def update(url=URL, file=DATABASE):
