@@ -2,7 +2,7 @@
 script to save vpn confing from [vpngate.net](https://www.vpngate.net/) to your local machine and automatically connect to them 
 
 # usage
-'''
+```
 usage: autovpn.py [-h] [-i [N]] [-c [JP]] [-u] [-l] [-d] [-t] [--info]
 
 options:
@@ -15,7 +15,7 @@ options:
   -d, --delete          delete Nth element in database (use --index)
   -t, --tor             connect to vpn-server through TOR proxy
   --info                show information about database
-'''
+```
 
 # install
 $ git clone https://github.com/internetghost0/autovpn
