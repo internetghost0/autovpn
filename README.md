@@ -31,6 +31,9 @@ $ ./autovpn.py
 # get info about all configs
 $ ./autovpn.py -l
 
+# connect to japanese server
+$ ./autovpn.py -c JP
+
 # connect to vpn via socks5 torproxy (127.0.0.1:9050)
 # if you on windows, change port to 9150
 $ ./autovpn.py -t
