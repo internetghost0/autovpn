@@ -6,6 +6,7 @@ import os
 import time
 import tempfile
 import argparse
+import subprocess
 
 URL = 'https://www.vpngate.net/api/iphone/'
 DATABASE = 'vpn_configs.db'
@@ -21,7 +22,7 @@ def update(url=URL, file=DATABASE):
             f.write("%s:%s\n" % (line[6],line[14]))
     f.close()
     print('Done.')
-def delete(index=1, file=DATABASE):
+def delete(index=0, file=DATABASE):
     f = open(file, 'r')
     lines = f.readlines()
     f.close()
@@ -58,10 +59,10 @@ def connect(index, tor=False, file=DATABASE,verbose=True):
     config.close()
     if tor:
         if verbose: print('over tor')
-        os.system('openvpn --socks-proxy %s --config %s' % (TOR_PROXY, config.name))
+        execute(['openvpn','--config', config.name, '--socks-proxy', TOR_PROXY])
     else:
         if verbose: print()
-        os.system('openvpn --config %s' % config.name)
+        execute(['openvpn','--config', config.name])
     os.unlink(config.name)
 
 def lookup(index, country, file=DATABASE):
@@ -102,10 +103,19 @@ def connect_c(index, country, tor=False, file=DATABASE, verbose=True):
         exit()
     if tor:
         if verbose: print('over tor')
-        os.system('openvpn --socks-proxy %s --config %s' % (TOR_PROXY, config.name))
+        execute(['openvpn','--config', config.name, '--socks-proxy', TOR_PROXY])
     else:
-        os.system('openvpn --config %s' % config.name)
+        execute(['openvpn','--config', config.name])
     os.unlink(config.name)
+
+def execute(cmd):
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
+        for line in p.stdout:
+            print(line, end='') # process line here
+
+    if p.returncode != 0:
+        raise subprocess.CalledProcessError(p.returncode, p.args)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -126,7 +136,7 @@ if __name__ == '__main__':
         exit()
     exitt = False
     if args.delete:
-        delete(args.delete)
+        delete(index=args.index)
         exitt = True
     if args.lookup:
         inf = info(verbose=False)
@@ -148,4 +158,16 @@ if __name__ == '__main__':
         if not os.path.isfile(DATABASE):
             print("Couldn't find a db, updating...")
             update()
-        connect(index=args.index, tor=args.tor)
+        while True:
+            try:
+                connect(index=args.index, tor=args.tor)
+            except Exception as e:
+                print(e)
+            finally:
+                print()
+                choice = input('continue? Y/n: ')
+                if choice in ['n', 'N']:
+                    break
+                else:
+                    args.index += 1
+                    continue
