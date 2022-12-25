@@ -1,6 +1,9 @@
 # autovpn
 script to save vpn confing from [vpngate.net](https://www.vpngate.net/) to your local machine and automatically connect to them 
 
+# install
+$ git clone https://github.com/internetghost0/autovpn
+
 # usage
 ```
 usage: autovpn.py [-h] [-i [N]] [-c [JP]] [-u] [-l] [-d] [-t] [--info]
@@ -17,9 +20,21 @@ options:
   --info                show information about database
 ```
 
-# install
-$ git clone https://github.com/internetghost0/autovpn
+# examples
+```
+# get free vpn-configs
+$ ./autovpn.py -u
 
+# connect to first vpn in the db
+$ ./autovpn.py
+
+# get info about all configs
+$ ./autovpn.py -l
+
+# connect to vpn via socks5 torproxy (127.0.0.1:9050)
+# if you on windows, change port to 9150
+$ ./autovpn.py -t
+```
 
 # errors: 
 if you have the error `OPTIONS ERROR: failed to negotiate cipher with server.  Add the server's cipher ('AES-128-CBC') to --data-ciphers`, then change `IS_UNSAFE_CIPHER` to `True`
