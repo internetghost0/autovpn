@@ -17,9 +17,7 @@ options:
   -l, --lookup          return index of [country] at Nth [index] or if country=any, prints whats country at [index]
   -d, --delete          delete Nth element in database (use --index)
   -t, --tor             connect to vpn-server through TOR proxy
-  --info                show information about database
-```
-
+  --info                show information about database ```
 # examples
 ```
 # get free vpn-configs
@@ -40,4 +38,6 @@ $ ./autovpn.py -t
 ```
 
 # errors: 
-if you have the error `OPTIONS ERROR: failed to negotiate cipher with server.  Add the server's cipher ('AES-128-CBC') to --data-ciphers`, then change `IS_UNSAFE_CIPHER` to `True`
+if you have the error `OPTIONS ERROR: failed to negotiate cipher with server.  Add the server's cipher ('AES-128-CBC') to --data-ciphers`
+
+then change `IS_UNSAFE_CIPHER` to True in `./autovpn.py`
