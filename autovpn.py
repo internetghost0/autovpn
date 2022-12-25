@@ -158,14 +158,16 @@ if __name__ == '__main__':
         if not os.path.isfile(DATABASE):
             print("Couldn't find a db, updating...")
             update()
+        i = 0
         while True:
             try:
                 connect(index=args.index, tor=args.tor)
             except Exception as e:
                 print(e)
             finally:
+                i += 1
                 print()
-                choice = input('continue? Y/n: ')
+                choice = input(f'[{i}] Continue? [Y/n]: ')
                 if choice in ['n', 'N']:
                     break
                 else:
