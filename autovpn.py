@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# TODO: Add comments
 
 from base64 import b64decode
 import requests
@@ -11,6 +12,11 @@ import subprocess
 URL = 'https://www.vpngate.net/api/iphone/'
 DATABASE = 'vpn_configs.db'
 TOR_PROXY = "127.0.0.1 9050"
+
+# if you have an error `OPTIONS ERROR: failed to negotiate cipher with server.  Add the server's cipher ('AES-128-CBC') to --data-ciphers`
+IS_UNSAFE_CIPHER = False
+UNSAFE_CIPHER_CMD = ['--data-ciphers', 'AES-128-CBC']
+
 
 def update(url=URL, file=DATABASE):
     print('Connecting to ...', URL)
@@ -46,25 +52,6 @@ def info(file=DATABASE, verbose=True):
         print(info)
     return info
 
-def connect(index, tor=False, file=DATABASE,verbose=True):
-    config = tempfile.NamedTemporaryFile(delete=False)
-    with open(file,'r') as f:
-        data = f.readlines()
-        if len(data) <= index:
-            print('ERROR: index out of range')
-            exit()
-        data = data[index]
-        config.write(b64decode(data[3:]))
-        if verbose: print('[*] Connecting to', data[:2],end=' ')
-    config.close()
-    if tor:
-        if verbose: print('over tor')
-        execute(['openvpn','--config', config.name, '--socks-proxy', TOR_PROXY])
-    else:
-        if verbose: print()
-        execute(['openvpn','--config', config.name])
-    os.unlink(config.name)
-
 def lookup(index, country, file=DATABASE):
     if not country:
         country = 'any'
@@ -83,29 +70,46 @@ def lookup(index, country, file=DATABASE):
         idx_in_db += 1
     print('ERROR: index is out of range')
 
-def connect_c(index, country, tor=False, file=DATABASE, verbose=True):
-    i = 0
-    is_config_found  = False
-    print('[*] Connecting to specific country `%s`' % country, end=' ')
-    with open(file,'r') as f:
-        data = f.readlines()
+def connect(index, tor=False, country=None, file=DATABASE,verbose=True):
     config = tempfile.NamedTemporaryFile(delete=False)
-    for line in data:
-        if line[:2] == country:
-            if index == i:
-                config.write(b64decode(line[3:]))
-                config.close()
-                is_config_found = True
-                break
-            i += 1
-    if not is_config_found:
-        print('\nERROR: index is out of range')
-        exit()
-    if tor:
-        if verbose: print('over tor')
-        execute(['openvpn','--config', config.name, '--socks-proxy', TOR_PROXY])
+    if country == None:
+        with open(file,'r') as f:
+            data = f.readlines()
+            if len(data) <= index:
+                print('ERROR: index out of range')
+                exit()
+            data = data[index]
+            config.write(b64decode(data[3:]))
+            if verbose: print('[*] Connecting to `%s`' % data[:2])
+        config.close()
     else:
-        execute(['openvpn','--config', config.name])
+        print('[*] Connecting to specific country `%s`' % country, end=' ')
+        i = 0
+        is_config_found  = False
+        with open(file,'r') as f:
+            data = f.readlines()
+        for line in data:
+            if line[:2] == country:
+                # if you specify `country` + `index`
+                if index >= i:
+                    config.write(b64decode(line[3:]))
+                    config.close()
+                    is_config_found = True
+                    break
+                i += 1
+        if not is_config_found:
+            print('\nERROR: index is out of range')
+            exit()
+
+    openvpn_cmd = ['openvpn','--config', config.name]
+    if IS_UNSAFE_CIPHER:
+        openvpn_cmd += UNSAFE_CIPHER_CMD
+    if tor:
+        openvpn_cmd += ['--socks-proxy', TOR_PROXY]
+        if verbose: print('over tor\n')
+
+    # Execute openvpn
+    execute(openvpn_cmd)
     os.unlink(config.name)
 
 def execute(cmd):
@@ -114,7 +118,8 @@ def execute(cmd):
             print(line, end='') # process line here
 
     if p.returncode != 0:
-        raise subprocess.CalledProcessError(p.returncode, p.args)
+        raise subprocess.CalledProcessError(p.returncode, ' '.join(p.args))
+
 
 
 if __name__ == '__main__':
@@ -123,7 +128,7 @@ if __name__ == '__main__':
     parser.add_argument('-c','--country', metavar='[JP]', help='choose country (country=any default)')
     parser.add_argument('-u','--update', action='store_true', help='update database')
     parser.add_argument('-l','--lookup', action='store_true', help='return index of [country] at Nth [index] or if country=any, prints whats country at [index]')
-    parser.add_argument('-d','--delete', action='store_true', help='delete Nth element in database (use --index)')
+    parser.add_argument('-d','--delete', action='store_true', help='delete Nth element in database (use --index)') 
     parser.add_argument('-t','--tor', action='store_true', help='connect to vpn-server through TOR proxy')
     parser.add_argument('--info', action='store_true', help='show information about database')
     args = parser.parse_args()
@@ -136,8 +141,8 @@ if __name__ == '__main__':
         exit()
     exitt = False
     if args.delete:
-        delete(index=args.index)
-        exitt = True
+        delete(index=args.index) 
+        exitt = True 
     if args.lookup:
         inf = info(verbose=False)
         print(sum(inf.values()),'configs in db')
@@ -150,10 +155,8 @@ if __name__ == '__main__':
         exitt = True
     if exitt: 
         exit()
-    if args.country:
-        connect_c(index=args.index, country=args.country, tor=args.tor)
     else:
-        print('[!] No args are provide, trying to connect...')
+        print('[0] No args are provide, trying to connect...')
         print('(hint: autovpn.py --help)')
         if not os.path.isfile(DATABASE):
             print("Couldn't find a db, updating...")
@@ -163,7 +166,7 @@ if __name__ == '__main__':
             try:
                 connect(index=args.index, tor=args.tor)
             except Exception as e:
-                print(e)
+                print('ERROR:', e)
             finally:
                 i += 1
                 print()
@@ -171,5 +174,5 @@ if __name__ == '__main__':
                 if choice in ['n', 'N']:
                     break
                 else:
-                    args.index += 1
+                    index += 1
                     continue
