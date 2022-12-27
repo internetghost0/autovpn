@@ -2,6 +2,7 @@
 # TODO: Add comments
 
 from base64 import b64decode
+from hashlib import md5
 import requests
 import os
 import time
@@ -14,9 +15,11 @@ DATABASE = 'vpn_configs.db'
 TOR_PROXY = "127.0.0.1 9050"
 
 # if you have an error `OPTIONS ERROR: failed to negotiate cipher with server.  Add the server's cipher ('AES-128-CBC') to --data-ciphers`
-IS_UNSAFE_CIPHER = False
+IS_UNSAFE_CIPHER = True
 UNSAFE_CIPHER_CMD = ['--data-ciphers', 'AES-128-CBC']
 
+def md5hash(msg):
+    return md5(msg.encode()).hexdigest()
 
 def update(url=URL, file=DATABASE):
     print('Connecting to ...', URL)
@@ -80,10 +83,10 @@ def connect(index, tor=False, country=None, file=DATABASE,verbose=True):
                 exit()
             data = data[index]
             config.write(b64decode(data[3:]))
-            if verbose: print('[*] Connecting to `%s`' % data[:2])
+            if verbose: print(f'[*] Connecting to `{data[:2]}` hash({md5hash(data[3:])})')
         config.close()
     else:
-        print('[*] Connecting to specific country `%s`' % country, end=' ')
+        print(country)
         i = 0
         is_config_found  = False
         with open(file,'r') as f:
@@ -91,7 +94,8 @@ def connect(index, tor=False, country=None, file=DATABASE,verbose=True):
         for line in data:
             if line[:2] == country:
                 # if you specify `country` + `index`
-                if index >= i:
+                if i >= index:
+                    print(f'[*] Connecting to specific `{country}` hash({md5hash(line[3:])})')
                     config.write(b64decode(line[3:]))
                     config.close()
                     is_config_found = True
@@ -164,7 +168,7 @@ if __name__ == '__main__':
         i = 0
         while True:
             try:
-                connect(index=args.index, tor=args.tor)
+                connect(index=args.index, country=args.country, tor=args.tor)
             except Exception as e:
                 print('ERROR:', e)
             finally:
@@ -174,5 +178,5 @@ if __name__ == '__main__':
                 if choice in ['n', 'N']:
                     break
                 else:
-                    index += 1
+                    args.index += 1
                     continue
