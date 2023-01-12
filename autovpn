@@ -15,7 +15,7 @@ DATABASE = 'vpn_configs.db'
 TOR_PROXY = "127.0.0.1 9050"
 
 # if you have an error `OPTIONS ERROR: failed to negotiate cipher with server.  Add the server's cipher ('AES-128-CBC') to --data-ciphers`
-IS_UNSAFE_CIPHER = True
+USE_UNSAFE_CIPHER = True
 UNSAFE_CIPHER_CMD = ['--data-ciphers', 'AES-128-CBC']
 
 def md5hash(msg):
@@ -106,7 +106,7 @@ def connect(index, tor=False, country=None, file=DATABASE,verbose=True):
             exit()
 
     openvpn_cmd = ['openvpn','--config', config.name]
-    if IS_UNSAFE_CIPHER:
+    if USE_UNSAFE_CIPHER:
         openvpn_cmd += UNSAFE_CIPHER_CMD
     if tor:
         openvpn_cmd += ['--socks-proxy', TOR_PROXY]
